@@ -1,0 +1,186 @@
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder ,OneHotEncoder
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import chi2
+from sklearn.feature_selection import f_classif
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import cross_val_score
+import  numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import OrdinalEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn import metrics
+from imblearn.over_sampling import SMOTE
+from sklearn import svm
+from sklearn.ensemble import RandomForestRegressor
+from sklearn import preprocessing
+from sklearn.model_selection import ShuffleSplit
+from sklearn.feature_selection import VarianceThreshold
+
+name =pd.read_csv("dd.csv")
+df_tr = name.transpose()
+new_header = df_tr.iloc[0] #grab the first row for the header
+df_tr = df_tr[1:] #take the data less the header row
+df_tr.columns = new_header #set the header row as the df header
+df_tr.rename(columns=df_tr.iloc[0])
+#onehotencoder=OneHotEncoder()
+#xc=onehotencoder.fit_transform(df_tr.Class.values.reshape(-1,1)).toarray()
+#dfonehot=pd.DataFrame(xc,columns=["Class_"+str(int(i)) for i in range(xc.shape[1])])
+#df_tr = df_tr.apply(pd.to_numeric,errors ="coerce").fillna(0)
+#dfonehot.reset_index(drop=True, inplace=True)
+#df_tr.reset_index(drop=True, inplace=True)
+#dfc=pd.concat([df_tr,dfonehot],axis=1)
+#dfc=dfc.drop(['Class'],axis=1)
+t=df_tr['Class']
+label=preprocessing.LabelEncoder()
+df_tr['Class']=label.fit_transform(df_tr['Class'])
+dfc=df_tr
+yuu=df_tr['Class']
+dfc = dfc.apply(pd.to_numeric,errors ="coerce").fillna(0)
+d = dfc.dtypes
+#FAM71A
+dfc['FAM71A']=dfc['FAM71A'].replace(to_replace=0,value=dfc['FAM71A'].mean())
+gg=(dfc['FAM71A'] == 0).sum()
+#0->DH
+#1->DR
+#2->DS
+#3->LH
+#4->LR
+#5->LS
+x=dfc.iloc[:,0:24368]
+y=dfc.iloc[:,24368:24374]
+oversample = SMOTE()
+x,y=oversample.fit_resample(x, y)
+c=x.columns
+c=x.columns
+i=1
+if i==1:
+    chi2_selector = SelectKBest(chi2, k=100)
+    X_kbest = chi2_selector.fit_transform(x, y)  
+    cols = chi2_selector.get_support(indices=True)
+    cols = chi2_selector.get_support(indices=True)    
+elif i==2:
+    from sklearn.feature_selection import GenericUnivariateSelect
+    transformer = GenericUnivariateSelect(chi2, mode='k_best', param=30)
+    X_new = transformer.fit_transform(x, y)
+    cols = transformer.get_support(indices=True)
+elif i==3:
+    selector =  VarianceThreshold(0.6)
+    selector.fit(x)
+    cols=selector.get_support(indices=True)
+    #dfc=pd.concat([y,x],axis=1)
+x = x.iloc[:,cols]
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2,random_state=0)
+cv = ShuffleSplit(n_splits=5, random_state=10)
+#name=['DecisionTreeClassifier entoropy','RandomForestClassifier entoropy',"LogisticRegression","RandomForestClassifier",'accuaracyGaussianNB',"accuaracysvmlinear","accuaracysvmpoly","KNeighborsClassifier"]
+#acc=[]
+
+input="DecisionTree"
+#input='RandomForest'
+#input='RandomForestentropy'
+#input="GaussianNB"
+#input='svmlinear'
+#input='svmpoly'
+#input='KNeighbors'
+patitain1=pd.read_csv("paitient1.csv")
+df_tr1 = patitain1.transpose()
+df_tr1 = df_tr1.iloc[:,cols]
+if input.lower()=="decisiontree": 
+    from sklearn.tree import DecisionTreeClassifier
+    clf = DecisionTreeClassifier(criterion = 'entropy', random_state = 0)
+    clf.fit(x_train, y_train)
+    scores = cross_val_score(clf, x_train, y_train)
+    DecisionTreeClassifier_pred=clf.predict(x_train)
+    print("%0.2f accuracy DecisionTreeClassifier with a standard deviation of %0.2f 1 :    " % (scores.mean(), scores.std()))
+    accuaracy=accuracy_score(y_train, DecisionTreeClassifier_pred)
+    #acc.append(accuaracy)
+    print("accuaracy DecisionTreeClassifier entoropy:",accuaracy)
+    df_tr1_pred=clf.predict(df_tr1)
+elif input.lower()=="randomforestentropy":
+    clf= RandomForestClassifier(n_estimators = 10, criterion = 'entropy', random_state = 0)
+    clf.fit(x_train, y_train)
+    scores = cross_val_score(clf, x_train, y_train)
+    print("%0.2f accuracy RandomForestClassifier entoropy with a standard deviation of %0.2f 1 :    " % (scores.mean(), scores.std()))
+    Randomforceentorpy_pred=clf.predict(x_test)
+    accuaracy=accuracy_score(y_test, Randomforceentorpy_pred)
+ #   acc.append(accuaracy)
+    print("accuaracy RandomForestClassifier entoropy:",accuaracy)
+    df_tr1_pred=clf.predict(df_tr1)
+elif input.lower()=="randomforest":
+    clf=RandomForestClassifier(n_estimators=1000, class_weight='balanced')
+    clf.fit(x_train, y_train)
+    scores = cross_val_score(clf, x_train, y_train, cv=cv)
+    print("%0.2f accuracy RandomForestClassifier  with a standard deviation of %0.2f 1 :    " % (scores.mean(), scores.std()))
+    Randomforce_pred=clf.predict(x_test)
+    accuaracy=accuracy_score(y_test, Randomforce_pred)
+ #   acc.append(accuaracy)
+    print("accuaracy RandomForestClassifier :",accuaracy)
+    df_tr1_pred=clf.predict(df_tr1)
+elif input.lower()=="gaussiannb":
+    from sklearn.naive_bayes import GaussianNB
+    model = GaussianNB()
+    model.fit(x_train, y_train)
+    scores = cross_val_score(model, x_train, y_train, cv=cv)
+    print("%0.2f accuracy GaussianNB with a standard deviation of %0.2f 5:  " % (scores.mean(), scores.std()))
+    GaussianNB_pred=model.predict(x_test)
+    accuaracy=accuracy_score(y_test, GaussianNB_pred)
+#    acc.append(accuaracy)
+    print("accuaracyGaussianNB ",accuaracy)
+    df_tr1_pred=model.predict(df_tr1)
+elif input.lower()=="svmlinear":
+    rbf = svm.SVC(kernel='linear', C=0.1, class_weight='balanced').fit(x_train, y_train)
+    scores = cross_val_score(rbf, x_train, y_train, cv=cv)
+    print("%0.2f accuracy svmlinear with a standard deviation of %0.2f6:  " % (scores.mean(), scores.std()))
+    svmlinear_pred=rbf.predict(x_test)
+    accuaracy=accuracy_score(y_test, svmlinear_pred)
+#    acc.append(accuaracy)
+    print("accuaracysvmlinear ",accuaracy)
+    df_tr1_pred=rbf.predict(df_tr1)
+elif input.lower()=="svmpoly":
+    rbf = svm.SVC(kernel='poly', C=1.0 ,class_weight='balanced')
+    rbf.fit(x_train, y_train)
+    scores = cross_val_score(rbf, x_train, y_train, cv=cv)
+    print("%0.2f accuracy svmpoly with a standard deviation of %0.2f6:  " % (scores.mean(), scores.std()))
+    svmpoly_pred=rbf.predict(x_test)
+    accuaracy=accuracy_score(y_test, svmpoly_pred)
+ #   acc.append(accuaracy)
+    print("accuaracysvmpoly ",accuaracy)
+    df_tr1_pred=rbf.predict(df_tr1)
+elif input.lower()=="kneighbors":
+    from sklearn.neighbors import KNeighborsClassifier
+    model = KNeighborsClassifier(n_neighbors=3)
+    model.fit(x_train, y_train)
+    scores = cross_val_score(model, x_train, y_train, cv=cv)
+    print("%0.2f accuracy KNeighborsClassifier with a standard deviation of %0.2f 2:  " % (scores.mean(), scores.std()))
+    KNeighborsClassifier_pred=model.predict(x_test)
+    accuaracy=accuracy_score(y_test, KNeighborsClassifier_pred)
+#    acc.append(accuaracy)
+    print("accuaracyKNeighborsClassifier ",accuaracy)
+    df_tr1_pred=model.predict(df_tr1)
+    
+#0->DH
+#1->DR
+#2->DS
+#3->LH
+#4->LR
+#5->LS
+if(df_tr1_pred==0):   
+    print("the hormones is bad so try to use Radiation therapy or Serge Therapy")
+elif(df_tr1_pred==1):   
+    print("the Radiation is bad so try to use hormones therapy or Serge Therapy")
+elif(df_tr1_pred==2):   
+    print("the Serge  is bad so try to use Radiation hormones therapy orTherapy")
+elif(df_tr1_pred==3):   
+    print("the hormones is better than use Radiation therapy or Serge Therapy")
+elif(df_tr1_pred==4):   
+    print("the Radiation is better than use hormones therapy or Serge Therapy")
+elif(df_tr1_pred==5):   
+    print("the Serge  is better than use Radiation hormones therapy orTherapy")
+#print (" k chi-2 :100,"+"test size: 10,"+"n_sample cross vaildation :5`")
+#i=0
+#for m in name:
+#   print (m+":",acc[i])
+#   i+=1
