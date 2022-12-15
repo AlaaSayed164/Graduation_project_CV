@@ -10,8 +10,9 @@ the graduation project use python language to predict type of treatment feature 
 
 Data Availability Publicly available datasets were analyzed in this study. This data can be found here: http://www.cbioportal.org/study?id=brca_metabric.
 
-[1.implement of the ML algorithm only 
+
+[1. Here is the implementation of the ML algorithm only 
 ]( https://github.com/AlaaSayed164/Graduation_project_CV/blob/main/final.txt)
 
-[2. All code 
+[2. Here is the drive that contains All code 
 ]( https://drive.google.com/file/d/1u4rrB1mRWhu1LDLsrQ2v1WMykSUcjE3_/view)
